@@ -1,145 +1,127 @@
 import javax.swing.*;
 import java.awt.*;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
 public class VentanaPrincipal extends JFrame {
-    // Componentes de la interfaz
-    private JTextField nombreTextField;
-    private JTextField edadTextField;
-    private JComboBox<String> sintomasComboBox;
-    private JButton ingresarDatosButton;
-    private List<String> sintomasSeleccionados;
+
+    private JTextField txtNombre = new JTextField(20);
+    private JTextField txtEdad = new JTextField(20);
+    private JTextField txtNivelGlucosa = new JTextField(20);
+    private JComboBox<String> cbTipoDiabetes = new JComboBox<>(new String[] { "Tipo 1", "Tipo 2", "Gestacional"
+    });
+    private JButton btnGuardar = new JButton("Guardar");
+
+    private Map<String, String> recomendaciones;
+
+    {
+
+    };
 
     public VentanaPrincipal() {
-        // Configurar la ventana principal
-        setTitle("Diabetes Control App");
-        setSize(400, 400);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new FlowLayout());
+        recomendaciones = new HashMap<>();
+        recomendaciones.put("Sed excesiva", "Aumenta la ingesta de agua y evita bebidas azucaradas.");
+        recomendaciones.put("Fatiga", "Descansa y consulta a tu médico. Considera ajustar tus medicamentos.");
+        recomendaciones.put("Visión borrosa",
+                "Consulta inmediatamente a un oftalmólogo. Asegúrate de controlar tus niveles de glucosa.");
+        recomendaciones.put("Pérdida de peso repentina",
+                "Consulta a tu médico. Revisa tu dieta y tu régimen de medicamentos.");
+        recomendaciones.put("Hambre constante", "Come alimentos saludables en porciones controladas.");
 
-        // Inicializar componentes
-        nombreTextField = new JTextField(20);
-        edadTextField = new JTextField(5);
-        String[] sintomasOptions = {"Bien", "Mal"};
-        sintomasComboBox = new JComboBox<>(sintomasOptions);
-        ingresarDatosButton = new JButton("Ingresar Datos");
-        sintomasSeleccionados = new ArrayList<>();
+        add(new JLabel("Nombre:"));
+        add(txtNombre);
+        add(new JLabel("Edad:"));
+        add(txtEdad);
+        add(new JLabel("Nivel de glucosa:"));
+        add(txtNivelGlucosa);
+        add(new JLabel("Tipo de diabetes:"));
+        add(cbTipoDiabetes);
+        add(btnGuardar);
 
-        // Configurar el diseño de la interfaz
-        setLayout(new BorderLayout());
-
-        // Panel para los campos de texto y el combo
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new GridLayout(3, 2));
-        inputPanel.add(new JLabel("Nombre: "));
-        inputPanel.add(nombreTextField);
-        inputPanel.add(new JLabel("Edad: "));
-        inputPanel.add(edadTextField);
-        inputPanel.add(new JLabel("¿Cómo te sientes?"));
-        inputPanel.add(sintomasComboBox);
-
-        // Panel para el botón de registro
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(ingresarDatosButton);
-
-        // Agregar componentes a la ventana
-        add(inputPanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
-
-        // Configurar acción para el botón de registro
-        ingresarDatosButton.addActionListener(new ActionListener() {
+        btnGuardar.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Obtener datos ingresados por el usuario
-                String nombre = nombreTextField.getText();
-                int edad = Integer.parseInt(edadTextField.getText());
-                String sintomas = (String) sintomasComboBox.getSelectedItem();
+                int respuesta = JOptionPane.showOptionDialog(null, "¿Cómo te sientes?", "Estado de salud",
+                        JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
+                        new Object[] { "Bien", "Mal" }, "Bien");
 
-                if ("Mal".equals(sintomas)) {
-                    // Si el usuario se siente mal, preguntar por síntomas adicionales
-                    preguntarSintomas();
-                } else {
-                    // Generar recomendaciones generales
-                    String recomendaciones = generarRecomendacionesGenerales();
-                    JOptionPane.showMessageDialog(null, "Recomendaciones:\n" + recomendaciones);
+                if (respuesta == 0) {
+                    guardarDatos("Bien", new ArrayList<>());
+                    JOptionPane.showMessageDialog(null, "Datos guardados con éxito.");
+                } else if (respuesta == 1) {
+                    ArrayList<String> sintomas = mostrarDialogoSintomas();
+                    StringBuilder consejos = new StringBuilder("Recomendaciones:\n");
+                    for (String sintoma : sintomas) {
+                        consejos.append("- ").append(recomendaciones.get(sintoma)).append("\n");
+                    }
+                    guardarDatos("Mal", sintomas);
+                    JOptionPane.showMessageDialog(null, consejos.toString());
                 }
             }
         });
+        setSize(250, 500);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
     }
 
-    private void preguntarSintomas() {
-        String[] opcionesSintomas = {"Presión baja", "Fatiga", "Visión borrosa", "Orina frecuente", "Sed excesiva"};
+    private ArrayList<String> mostrarDialogoSintomas() {
+        ArrayList<String> sintomasSeleccionados = new ArrayList<>();
 
-        // Mostrar diálogo de selección múltiple de síntomas
-        Object seleccionados = JOptionPane.showInputDialog(
-                null,
-                "Selecciona los síntomas que tienes (puedes seleccionar varios):\n",
-                "Síntomas",
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                opcionesSintomas,
-                opcionesSintomas[0]
-        );
+        JCheckBox chkSintoma1 = new JCheckBox("Sed excesiva");
+        JCheckBox chkSintoma2 = new JCheckBox("Fatiga");
+        JCheckBox chkSintoma3 = new JCheckBox("Visión borrosa");
+        JCheckBox chkSintoma4 = new JCheckBox("Pérdida de peso repentina");
+        JCheckBox chkSintoma5 = new JCheckBox("Hambre constante");
 
-        if (seleccionados != null) {
-            sintomasSeleccionados.clear(); // Limpiar la lista de síntomas seleccionados
+        Object[] message = {
+                "Selecciona tus síntomas:",
+                chkSintoma1,
+                chkSintoma2,
+                chkSintoma3,
+                chkSintoma4,
+                chkSintoma5
+        };
 
-            // Verificar si se seleccionaron síntomas
-            for (String sintoma : opcionesSintomas) {
-                if (seleccionados.equals(sintoma)) {
-                    sintomasSeleccionados.add(sintoma);
-                }
-            }
-
-            // Generar recomendaciones basadas en los síntomas seleccionados
-            String recomendaciones = generarRecomendacionesEspecificas();
-            JOptionPane.showMessageDialog(null, "Recomendaciones:\n" + recomendaciones);
-        } else {
-            JOptionPane.showMessageDialog(null, "No se seleccionaron síntomas.");
+        int option = JOptionPane.showConfirmDialog(null, message, "Síntomas", JOptionPane.OK_CANCEL_OPTION);
+        if (option == JOptionPane.OK_OPTION) {
+            if (chkSintoma1.isSelected())
+                sintomasSeleccionados.add(chkSintoma1.getText());
+            if (chkSintoma2.isSelected())
+                sintomasSeleccionados.add(chkSintoma2.getText());
+            if (chkSintoma3.isSelected())
+                sintomasSeleccionados.add(chkSintoma3.getText());
+            if (chkSintoma4.isSelected())
+                sintomasSeleccionados.add(chkSintoma4.getText());
+            if (chkSintoma5.isSelected())
+                sintomasSeleccionados.add(chkSintoma5.getText());
         }
+        return sintomasSeleccionados;
     }
 
-    private String generarRecomendacionesGenerales() {
-        // Generar recomendaciones generales relacionadas con la diabetes Mellitus
-        StringBuilder recomendaciones = new StringBuilder();
-        recomendaciones.append("Recomendaciones generales para controlar la diabetes:\n");
-        recomendaciones.append(" - Mantenga una dieta equilibrada.\n");
-        recomendaciones.append(" - Realice ejercicio regularmente.\n");
-        recomendaciones.append(" - Controle su nivel de glucosa según las indicaciones médicas.\n");
-        return recomendaciones.toString();
-    }
+    private void guardarDatos(String estado, ArrayList<String> sintomas) {
+        String datos = txtNombre.getText() + "," + txtEdad.getText() + "," + txtNivelGlucosa.getText() + ","
+                + cbTipoDiabetes.getSelectedItem().toString() + "," + estado;
 
-    private String generarRecomendacionesEspecificas() {
-        // Generar recomendaciones basadas en los síntomas seleccionados
-        StringBuilder recomendaciones = new StringBuilder();
-        recomendaciones.append("Recomendaciones basadas en los síntomas seleccionados:\n");
-
-        for (String sintoma : sintomasSeleccionados) {
-            if ("Presión baja".equals(sintoma)) {
-                recomendaciones.append(" - Beba líquidos y descanse.\n");
-            } else if ("Fatiga".equals(sintoma)) {
-                recomendaciones.append(" - Descanse y mantenga una dieta equilibrada.\n");
-            } else if ("Visión borrosa".equals(sintoma)) {
-                recomendaciones.append(" - Evite actividades que requieran enfoque visual.\n");
-            } else if ("Orina frecuente".equals(sintoma)) {
-                recomendaciones.append(" - Mantenga una hidratación adecuada.\n");
-            } else if ("Sed excesiva".equals(sintoma)) {
-                recomendaciones.append(" - Controle su ingesta de líquidos.\n");
+        if (estado.equals("Mal")) {
+            for (String sintoma : sintomas) {
+                datos += "," + sintoma;
             }
         }
 
-        return recomendaciones.toString();
+        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("usuarios.csv", true)))) {
+            out.println(datos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
-                ventanaPrincipal.setVisible(true);
-            }
-        });
+        new VentanaPrincipal();
     }
 }
